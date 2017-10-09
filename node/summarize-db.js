@@ -30,7 +30,13 @@ var printTableSummary = function (tableName) {
 	}
 	else {
 	   console.log('......|' + tableName + ">");
-	   console.log("yay");
+	   rows.map(function(field){
+		   var entry = "        FieldName: "
+		               + "`" + field.Field + "`"
+		               + "\t(" + field.Type + ")"; 
+		   console.log(entry);
+		   //console.log(field);
+	   });
 	   if (!connectionClosed) {
 		connectionClosed = true;
 		connection.end();

@@ -49,11 +49,6 @@ var printTableSummary = function (tableName, databaseName) {
 
            collectedData.databases[databaseName].tablesLeftToProcess -= 1;
            printCollectedData();
-           //console.log(util.inspect(collectedData, {depth:5}));
-	   if (!connectionClosed) {
-		connectionClosed = true;
-		connection.end();
-	   }
 	}
     });
 }
@@ -73,6 +68,10 @@ function printCollectedData() {
           }
           delete collectedData.databases[databaseName];
         }
+    }
+
+    if (Object.keys(collectedData.databases).length === 0) {
+	connection.end();
     }
 }
 

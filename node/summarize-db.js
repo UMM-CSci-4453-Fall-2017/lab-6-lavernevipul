@@ -7,35 +7,36 @@ credentials.host="ids";
 var connection = mysql.createConnection(credentials);
 var collectedData = {};
 
-var printDatabaseSummary = function (databaseName) {
+var buildDatabaseSummary = function (databaseName) {
     var query = "SHOW tables IN " + databaseName + ";";
     connection.query(query, function(err, rows, fields){
         if (err) {
-            console.log("error in printDatabaseSummary" + err);
+            console.log("error in buildDatabaseSummary" + err);
             console.log("query was: " + query);
         } else {
             collectedData.databases[databaseName].tablesLeftToProcess = rows.length;
             collectedData.databases[databaseName].tables = {};
             rows.map(function(row){
               collectedData.databases[databaseName].tables[databaseName + "." + row["Tables_in_" + databaseName]] = [];
-              printTableSummary(databaseName + "." + row["Tables_in_" + databaseName], databaseName);
+              buildTableSummary(row["Tables_in_" + databaseName], databaseName);
             });
        } 
    })
 };
 
-var printTableSummary = function (tableName, databaseName) {
-    var tableQuery = "Describe " + tableName;
+var buildTableSummary = function (tableName, databaseName) {
+    var tableQuery = "Describe `" + databaseName +"`.`"  + tableName + "`";
     connection.query(tableQuery, function(err,rows,fields) {
 	if (err) {
-	    console.log("error in printTableSummary" +err);
+	    console.log("error in buildTableSummary" +err);
+            collectedData.databases[databaseName].tablesLeftToProcess -= 1;
 	}
 	else {
 	   rows.map(function(field){
 		   var entry = "        FieldName: "
 		               + "`" + field.Field + "`"
 		               + "\t(" + field.Type + ")"; 
-                   collectedData.databases[databaseName].tables[tableName].push(entry);
+                   collectedData.databases[databaseName].tables[databaseName + "." + tableName].push(entry);
 	   });
 
            collectedData.databases[databaseName].tablesLeftToProcess -= 1;
@@ -79,7 +80,7 @@ connection.query('SHOW DATABASES',function(err,rows,fields){
         collectedData.databases = {};
         rows.map(function(row){
             collectedData.databases[row['Database']] = {};
-            printDatabaseSummary(row['Database']);
+            buildDatabaseSummary(row['Database']);
         });
     }
 });

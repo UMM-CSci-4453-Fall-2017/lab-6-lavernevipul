@@ -8,7 +8,7 @@ var connection = mysql.createConnection(credentials);
 var databases = {};
 
 var buildDatabaseSummary = function (databaseName) {
-    var query = "SHOW tables IN " + databaseName + ";";
+    var query = "SHOW tables IN `" + databaseName + "`;";
     connection.query(query, function(err, rows, fields){
         if (err) {
             console.log("error in buildDatabaseSummary" + err);

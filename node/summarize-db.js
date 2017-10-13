@@ -5,7 +5,7 @@ var util  = require("util");
 
 credentials.host="ids";
 var connection = mysql.createConnection(credentials);
-var collectedData = {};
+var databases = {};
 
 var buildDatabaseSummary = function (databaseName) {
     var query = "SHOW tables IN " + databaseName + ";";
@@ -14,10 +14,10 @@ var buildDatabaseSummary = function (databaseName) {
             console.log("error in buildDatabaseSummary" + err);
             console.log("query was: " + query);
         } else {
-            collectedData.databases[databaseName].tablesLeftToProcess = rows.length;
-            collectedData.databases[databaseName].tables = {};
+            databases[databaseName].tablesLeftToProcess = rows.length;
+            databases[databaseName].tables = {};
             rows.map(function(row){
-              collectedData.databases[databaseName].tables[databaseName + "." + row["Tables_in_" + databaseName]] = [];
+              databases[databaseName].tables[databaseName + "." + row["Tables_in_" + databaseName]] = [];
               buildTableSummary(row["Tables_in_" + databaseName], databaseName);
             });
        } 
@@ -29,17 +29,17 @@ var buildTableSummary = function (tableName, databaseName) {
     connection.query(tableQuery, function(err,rows,fields) {
 	if (err) {
 	    console.log("error in buildTableSummary" +err);
-            collectedData.databases[databaseName].tablesLeftToProcess -= 1;
+            databases[databaseName].tablesLeftToProcess -= 1;
 	}
 	else {
 	   rows.map(function(field){
 		   var entry = "        FieldName: "
 		               + "`" + field.Field + "`"
 		               + "\t(" + field.Type + ")"; 
-                   collectedData.databases[databaseName].tables[databaseName + "." + tableName].push(entry);
+                   databases[databaseName].tables[databaseName + "." + tableName].push(entry);
 	   });
 
-           collectedData.databases[databaseName].tablesLeftToProcess -= 1;
+           databases[databaseName].tablesLeftToProcess -= 1;
            printCollectedData();
 	}
     });
@@ -47,19 +47,19 @@ var buildTableSummary = function (tableName, databaseName) {
 
 function printCollectedData() {
 
-    for (var databaseName in collectedData.databases) {
+    for (var databaseName in databases) {
 
-        if (collectedData.databases[databaseName].tablesLeftToProcess === 0) {
+        if (databases[databaseName].tablesLeftToProcess === 0) {
           console.log("---|" + databaseName + ">");
-          for (var tableName in collectedData.databases[databaseName].tables) {
+          for (var tableName in databases[databaseName].tables) {
               console.log('......|' + tableName + ">");
-              console.log(collectedData.databases[databaseName].tables[tableName].join("\n"));
+              console.log(databases[databaseName].tables[tableName].join("\n"));
           }
-          delete collectedData.databases[databaseName];
+          delete databases[databaseName];
         }
     }
 
-    if (Object.keys(collectedData.databases).length === 0) {
+    if (Object.keys(databases).length === 0) {
 	connection.end();
     }
 }
@@ -77,9 +77,9 @@ connection.query('SHOW DATABASES',function(err,rows,fields){
     if(err){
         console.log('Error looking up databases');
     } else {
-        collectedData.databases = {};
+        databases = {};
         rows.map(function(row){
-            collectedData.databases[row['Database']] = {};
+            databases[row['Database']] = {};
             buildDatabaseSummary(row['Database']);
         });
     }
